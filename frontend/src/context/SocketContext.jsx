@@ -1,25 +1,46 @@
-
-import React, { createContext, useEffect } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
 export const SocketContext = createContext();
 
-const socket = io(`${import.meta.env.VITE_BASE_URL}`); // Replace with your server URL
-
 const SocketProvider = ({ children }) => {
+    const [socket, setSocket] = useState(null);
+
     useEffect(() => {
-        // Basic connection logic
-        socket.on('connect', () => {
-            console.log('Connected to server');
+        const newSocket = io(import.meta.env.VITE_BASE_URL, {
+            withCredentials: true,
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            autoConnect: true
         });
 
-        socket.on('disconnect', () => {
-            console.log('Disconnected from server');
+        newSocket.on('connect', () => {
+            console.log('Socket connected successfully');
         });
 
+        newSocket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+        });
+
+        newSocket.on('disconnect', (reason) => {
+            console.log('Socket disconnected:', reason);
+        });
+
+        setSocket(newSocket);
+
+        return () => {
+            if (newSocket) {
+                newSocket.disconnect();
+                newSocket.close();
+            }
+        };
     }, []);
 
-
+    if (!socket) {
+        return <div>Connecting to server...</div>;
+    }
 
     return (
         <SocketContext.Provider value={{ socket }}>
