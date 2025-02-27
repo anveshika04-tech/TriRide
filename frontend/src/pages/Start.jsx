@@ -1,19 +1,42 @@
-
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import Logo from '../components/Logo';
+import autoImage from '../assets/auto.png';  // Import the image
+import Navbar from '../components/Navbar';
 
 const Start = () => {
   return (
-    <div>
-      <div className='bg-cover bg-center bg-[url(https://images.unsplash.com/photo-1619059558110-c45be64b73ae?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)] h-screen pt-8 flex justify-between flex-col w-full'>
-        <img className='w-16 ml-8' src="https://cdn-assets-eu.frontify.com/s3/frontify-enterprise-files-eu/eyJwYXRoIjoid2VhcmVcL2ZpbGVcLzhGbTh4cU5SZGZUVjUxYVh3bnEyLnN2ZyJ9:weare:F1cOF9Bps96cMy7r9Y2d7affBYsDeiDoIHfqZrbcxAw?width=1200&height=417" alt="" />
-        <div className='bg-white pb-8 py-4 px-4'>
-          <h2 className='text-[30px] font-semibold'>Get Started with Uber</h2>
-          <Link to='/login' className='flex items-center justify-center w-full bg-black text-white py-3 rounded-lg mt-5'>Continue</Link>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+
+      {/* Main Content */}
+      <div className="flex flex-1">
+        {/* Left Side - Three-Wheeler Image */}
+        <div className="w-1/2 bg-yellow-50 flex items-center justify-center">
+          <img 
+            src={autoImage} 
+            alt="TriRide Auto" 
+            className="w-4/5 h-auto object-contain"
+          />
+        </div>
+
+        {/* Right Side - Content */}
+        <div className="w-1/2 flex flex-col justify-center items-center bg-white p-12">
+          {/* Content Box */}
+          <div className="bg-gray-100 p-10 rounded-lg shadow-lg text-center max-w-md">
+            <h2 className="text-4xl font-semibold mb-6">Get Started with TriRide</h2>
+            <p className="text-gray-600 mb-6">Book a ride and reach your destination with ease.</p>
+            <Link 
+              to='/login' 
+              className="block w-full bg-yellow-400 hover:bg-yellow-500 text-black text-center py-4 rounded-lg font-medium transition-colors"
+            >
+              Continue
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Start
+export default Start;

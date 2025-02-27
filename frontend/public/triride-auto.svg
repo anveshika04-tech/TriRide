@@ -1,0 +1,8 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M400 150C250 150 150 250 150 400H650C650 250 550 150 400 150Z" fill="#FCD34D"/>
+    <path d="M200 400H600" stroke="black" stroke-width="20" stroke-linecap="round"/>
+    <circle cx="250" cy="400" r="50" fill="black"/>
+    <circle cx="550" cy="400" r="50" fill="black"/>
+    <path d="M300 300H500" stroke="black" stroke-width="20" stroke-linecap="round"/>
+    <path d="M350 250H450" stroke="black" stroke-width="20" stroke-linecap="round"/>
+</svg> 

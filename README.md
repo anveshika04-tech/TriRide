@@ -1,6 +1,6 @@
-# Uber Clone Application
+# TriRide Application
 
-A full-stack Uber clone application built with React, Node.js, Socket.IO, and Google Maps API.
+A full-stack ride-sharing application built with React, Node.js, Socket.IO, and Google Maps API.
 
 ## Features
 
@@ -55,6 +55,18 @@ npm install
 ```
 
 4. Set up environment variables
+
+Copy the example environment files and update them with your values:
+
+Backend:
+```bash
+cp Backend/.env.example Backend/.env
+```
+
+Frontend:
+```bash
+cp frontend/.env.example frontend/.env
+```
 
 Backend (.env):
 ```env

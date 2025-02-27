@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:5000', // Use environment variable
-    withCredentials: true, // If using cookies or authentication
+    baseURL: import.meta.env.VITE_BASE_URL,
+    timeout: 5000,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -28,7 +28,11 @@ API.interceptors.request.use(
 API.interceptors.response.use(
     response => response,
     error => {
-        console.error('API Error:', error.response?.data || error.message);
+        if (error.code === 'ERR_NETWORK') {
+            console.error('Server is not running. Please start the backend server.');
+            // You can show a user-friendly message here
+            alert('Server is not running. Please try again later.');
+        }
         return Promise.reject(error);
     }
 );
