@@ -1,65 +1,43 @@
-import React from 'react'
-import { BRAND } from '../constants/brand'
-import autoLogo from '../assets/single.png'
-import shareAutoLogo from '../assets/share.png'
+import React from 'react';
 
-const VehiclePanel = ({ selectVehicle, fare, setConfirmRidePanel, setVehiclePanel }) => {
+const VehiclePanel = ({ selectVehicle, fare, setVehiclePanel }) => {
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Select Ride Type</h2>
+                <button 
+                    onClick={() => setVehiclePanel(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                >
+                    ✕
+                </button>
+            </div>
 
-  const handleVehicleSelect = (type) => {
-    selectVehicle(type)
-    setVehiclePanel(false)
-    setConfirmRidePanel(true)
-  }
+            <div className="space-y-4">
+                <div 
+                    onClick={() => selectVehicle('solo')}
+                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer flex justify-between items-center"
+                >
+                    <div>
+                        <h3 className="font-semibold">Solo Ride</h3>
+                        <p className="text-gray-600">Private ride just for you</p>
+                    </div>
+                    <div className="text-xl font-bold">₹{fare?.solo}</div>
+                </div>
 
-  return (
-    <div>
-      <h2 className='text-2xl font-semibold mb-6'>Choose a Vehicle</h2>
-      
-      {/* TriRide Solo Option */}
-      <div 
-        onClick={() => handleVehicleSelect('solo')}
-        className='flex items-center justify-between p-4 border rounded-lg mb-4 cursor-pointer hover:bg-gray-50'
-      >
-        <div className='flex items-center gap-4'>
-          <img 
-            src={autoLogo}
-            alt="Solo" 
-            className='w-16 h-16 object-contain'
-          />
-          <div>
-            <h3 className='font-semibold'>TriRide Solo</h3>
-            <p className='text-sm text-gray-600'>Private ride, just for you</p>
-            <p className='text-sm text-gray-500'>2 mins away</p>
-          </div>
+                <div 
+                    onClick={() => selectVehicle('share')}
+                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer flex justify-between items-center"
+                >
+                    <div>
+                        <h3 className="font-semibold">Shared Ride</h3>
+                        <p className="text-gray-600">Share your ride and save money</p>
+                    </div>
+                    <div className="text-xl font-bold">₹{fare?.share}</div>
+                </div>
+            </div>
         </div>
-        <div className='text-lg font-semibold'>
-          ₹{fare.solo || '---'}
-        </div>
-      </div>
+    );
+};
 
-      {/* TriRide Share Option */}
-      <div 
-        onClick={() => handleVehicleSelect('share')}
-        className='flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50'
-      >
-        <div className='flex items-center gap-4'>
-          <img 
-            src={shareAutoLogo}
-            alt="Share" 
-            className='w-16 h-16 object-contain'
-          />
-          <div>
-            <h3 className='font-semibold'>TriRide Share</h3>
-            <p className='text-sm text-gray-600'>Share your ride, save money</p>
-            <p className='text-sm text-gray-500'>3 mins away</p>
-          </div>
-        </div>
-        <div className='text-lg font-semibold'>
-          ₹{fare.share || '---'}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default VehiclePanel
+export default VehiclePanel;

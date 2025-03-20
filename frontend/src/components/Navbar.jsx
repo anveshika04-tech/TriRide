@@ -36,7 +36,7 @@ const Navbar = () => {
         )}
         {!isCaptainLoginPage && !isCaptainSignupPage && (
           <Link 
-            to="/captain-login" 
+            to="/captain/login" 
             className="bg-yellow-400 text-black px-3 py-1.5 text-sm rounded-lg hover:bg-yellow-500 transition-colors"
           >
             Sign in as Captain

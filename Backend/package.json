@@ -4,8 +4,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "kill-port 5000 && nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js",
+    "test": "mocha tests/**/*.test.js --timeout 30000",
+    "test:signup": "mocha tests/signup.test.js --timeout 30000",
+    "test:login": "mocha tests/login.test.js --timeout 30000",
     "clean": "kill-port 5000"
   },
   "keywords": [],
@@ -25,7 +27,11 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "chai": "^4.3.7",
+    "chromedriver": "^133.0.3",
+    "kill-port": "^2.0.1",
+    "mocha": "^10.2.0",
     "nodemon": "^3.1.9",
-    "kill-port": "^2.0.1"
+    "selenium-webdriver": "^4.29.0"
   }
 }

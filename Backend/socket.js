@@ -7,11 +7,19 @@ let io;
 function initializeSocket(server) {
     io = socketIO(server, {
         cors: {
-            origin: ['http://localhost:5174', 'http://localhost:5173'],
-            methods: ['GET', 'POST'],
+            origin: "*", // Allow all origins for testing
+            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             credentials: true,
-            allowedHeaders: ['Content-Type', 'Authorization']
-        }
+            allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+        },
+        path: '/socket.io',
+        transports: ['websocket', 'polling'],
+        allowUpgrades: true,
+        pingTimeout: 60000,
+        pingInterval: 25000,
+        cookie: false,
+        serveClient: true,
+        connectTimeout: 45000
     });
 
     io.on('connection', (socket) => {
@@ -72,11 +80,94 @@ function initializeSocket(server) {
             }
         });
 
+        // User sends ride request to nearby captains
+        socket.on('ride-request', async (data) => {
+            const { userId, rideDetails } = data;
+            try {
+                const onlineCaptains = await captainModel.find({ socketId: { $ne: null } });
+                onlineCaptains.forEach(captain => {
+                    sendMessageToSocketId(captain.socketId, {
+                        event: 'new-ride-request',
+                        data: { userId, rideDetails }
+                    });
+                });
+            } catch (err) {
+                socket.emit('error', { message: 'Failed to send ride request' });
+            }
+        });
+
+        // Captain accepts ride
+        socket.on('ride-accept', async (data) => {
+            const { captainId, userId, rideId } = data;
+            
+            try {
+                const user = await userModel.findById(userId);
+                if (user && user.socketId) {
+                    sendMessageToSocketId(user.socketId, {
+                        event: 'ride-accepted',
+                        data: { captainId, rideId }
+                    });
+                    console.log(`✅ Captain ${captainId} accepted ride ${rideId} for user ${userId}`);
+                }
+            } catch (err) {
+                console.error('❌ Error in ride-accept event:', err);
+                socket.emit('error', { message: 'Failed to notify user of acceptance' });
+            }
+        });
+
+        // User confirms ride
+        socket.on('ride-confirm', async (data) => {
+            const { userId, captainId, rideId } = data;
+            
+            try {
+                const captain = await captainModel.findById(captainId);
+                if (captain && captain.socketId) {
+                    sendMessageToSocketId(captain.socketId, {
+                        event: 'ride-confirmed',
+                        data: { userId, rideId }
+                    });
+                    console.log(`✅ User ${userId} confirmed ride ${rideId} with captain ${captainId}`);
+                }
+            } catch (err) {
+                console.error('❌ Error in ride-confirm event:', err);
+                socket.emit('error', { message: 'Failed to notify captain of confirmation' });
+            }
+        });
+
+        // Ride status update
+        socket.on('ride-status-update', async (data) => {
+            const { rideId, userId, captainId, status } = data;
+
+            try {
+                const user = await userModel.findById(userId);
+                const captain = await captainModel.findById(captainId);
+
+                if (user?.socketId) {
+                    sendMessageToSocketId(user.socketId, {
+                        event: 'ride-status',
+                        data: { rideId, status }
+                    });
+                }
+
+                if (captain?.socketId) {
+                    sendMessageToSocketId(captain.socketId, {
+                        event: 'ride-status',
+                        data: { rideId, status }
+                    });
+                }
+
+                console.log(`📦 Ride ${rideId} status updated to "${status}"`);
+            } catch (err) {
+                console.error('❌ Error in ride-status-update:', err);
+                socket.emit('error', { message: 'Failed to update ride status' });
+            }
+        });
+
         // Handle disconnection
         socket.on('disconnect', async () => {
             try {
                 console.log(`⚠️ Client disconnected: ${socket.id}`);
-                
+
                 await userModel.updateMany({ socketId: socket.id }, { socketId: null });
                 await captainModel.updateMany({ socketId: socket.id }, { socketId: null });
 

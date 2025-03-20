@@ -1,80 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import API from '../api/axiosInstance';
+import React from 'react';
 
-const LocationSearchPanel = ({ onLocationSelect }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        const fetchSuggestions = async () => {
-            if (!searchTerm || searchTerm.length < 3) {
-                setSuggestions([]);
-                return;
-            }
-
-            setLoading(true);
-            setError(null);
-
-            try {
-                const response = await API.get(`/maps/get-suggestions?input=${encodeURIComponent(searchTerm)}`);
-                setSuggestions(response.data);
-            } catch (err) {
-                console.error('Error fetching suggestions:', err);
-                setError(err.response?.data?.message || 'Failed to fetch suggestions');
-                setSuggestions([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const debounceTimer = setTimeout(fetchSuggestions, 300);
-        return () => clearTimeout(debounceTimer);
-    }, [searchTerm]);
-
+const LocationSearchPanel = ({ 
+    suggestions,
+    setPanelOpen,
+    setVehiclePanel,
+    setPickup,
+    setDestination,
+    activeField
+}) => {
     const handleSelect = (suggestion) => {
-        setSearchTerm(suggestion.description);
-        setSuggestions([]);
-        if (onLocationSelect) {
-            onLocationSelect(suggestion.description);
+        if (activeField === 'pickup') {
+            setPickup(suggestion.description);
+        } else if (activeField === 'destination') {
+            setDestination(suggestion.description);
         }
+        setPanelOpen(false);
     };
 
     return (
-        <div className="relative w-full">
-            <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Enter location"
-                className="w-full p-2 border rounded"
-            />
-            
-            {loading && (
-                <div className="absolute z-10 w-full bg-white border rounded mt-1 p-2">
-                    Loading...
-                </div>
-            )}
-            
-            {error && (
-                <div className="absolute z-10 w-full bg-red-50 text-red-500 border rounded mt-1 p-2">
-                    {error}
-                </div>
-            )}
+        <div className="bg-white h-full p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">
+                    Select {activeField === 'pickup' ? 'Pickup' : 'Destination'} Location
+                </h2>
+                <button 
+                    onClick={() => setPanelOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                >
+                    <i className="ri-close-line text-2xl"></i>
+                </button>
+            </div>
 
-            {suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-white border rounded mt-1">
-                    {suggestions.map((suggestion, index) => (
-                        <li
-                            key={suggestion.placeId || index}
+            {suggestions && suggestions.length > 0 ? (
+                <div className="space-y-2">
+                    {suggestions.map((suggestion) => (
+                        <div
+                            key={suggestion.placeId}
                             onClick={() => handleSelect(suggestion)}
-                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                            className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors flex items-center"
                         >
-                            {suggestion.description}
-                        </li>
+                            <i className="ri-map-pin-line text-xl text-gray-600 mr-3"></i>
+                            <div>
+                                <p className="text-gray-800">{suggestion.description}</p>
+                                {suggestion.coordinates && (
+                                    <p className="text-sm text-gray-500">
+                                        {suggestion.coordinates.lat.toFixed(4)}, {suggestion.coordinates.lng.toFixed(4)}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
+            ) : (
+                <div className="text-center text-gray-500 py-8">
+                    Start typing to see location suggestions
+                </div>
             )}
         </div>
     );

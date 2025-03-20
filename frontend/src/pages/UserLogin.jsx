@@ -1,15 +1,15 @@
-import React, { useState, useContext } from 'react'
+import { useState, useContext } from 'react'
 import API from '../api/axiosInstance'; // ✅ Use API instead of axios
 import { Link } from 'react-router-dom'
 import { UserDataContext } from '../context/UserContext'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import Logo from '../components/Logo'
 import Navbar from '../components/Navbar'
 
 const UserLogin = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('') // Add error state
   const { setUser } = useContext(UserDataContext)
   const navigate = useNavigate()
 
@@ -17,29 +17,66 @@ const UserLogin = () => {
     e.preventDefault();
 
     try {
-      const response = await API.post('/users/login', { email, password });
-      if (response.status === 200) {
-        const data = response.data;
-        setUser(data.user);
-        localStorage.setItem('token', data.token);
+      setError(''); // Clear any previous errors
+      
+      // Validate input
+      if (!email.trim() || !password.trim()) {
+        setError('Please enter both email and password');
+        return;
+      }
+
+      // Try the auth endpoint first
+      let response;
+      try {
+        response = await API.post('/auth/login', { email: email.trim(), password: password.trim() });
+      } catch (authError) {
+        // If auth endpoint fails, try the users endpoint
+        console.log('Auth endpoint failed, trying users endpoint');
+        response = await API.post('/users/login', { email: email.trim(), password: password.trim() });
+      }
+      
+      if (response.data?.token && response.data?.user) {
+        const { token, user } = response.data;
+        
+        // Store the token and user data
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Update context
+        setUser(user);
+        
+        // Redirect to home page
         navigate('/home');
+      } else {
+        throw new Error('Invalid response from server');
       }
     } catch (error) {
-      if (error.response) {
-        // Server responded with error
-        alert(error.response.data.message || 'Invalid credentials');
-      } else if (error.code === 'ERR_NETWORK') {
-        // Network error (server not running)
-        alert('Cannot connect to server. Please try again later.');
-      } else {
-        // Other errors
-        alert('An error occurred. Please try again.');
-      }
       console.error('Login Error:', error);
+      
+      if (error.response) {
+        // Handle specific HTTP error codes
+        switch (error.response.status) {
+          case 401:
+            setError('Invalid email or password');
+            break;
+          case 404:
+            setError('User not found');
+            break;
+          case 422:
+            setError('Please provide both email and password');
+            break;
+          default:
+            setError(error.response.data?.message || 'Login failed');
+        }
+      } else if (error.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please check your internet connection.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
+      
+      // Clear sensitive data
+      setPassword('');
     }
-
-    setEmail('');
-    setPassword('');
   }
 
   return (
@@ -50,6 +87,7 @@ const UserLogin = () => {
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           <h2 className="text-3xl font-semibold mb-6">Welcome to TriRide</h2>
+          {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
           <form onSubmit={submitHandler} className="space-y-6">
             <div>
               <h3 className="text-lg font-medium mb-2">What's your email</h3>
