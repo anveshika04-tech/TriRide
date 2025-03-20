@@ -7,11 +7,12 @@ let io;
 function initializeSocket(server) {
     io = socketIO(server, {
         cors: {
-            origin: ['http://localhost:5174', 'http://localhost:5173'],
-            methods: ['GET', 'POST'],
+            origin: ["http://localhost:5173", "http://localhost:5174"],
+            methods: ["GET", "POST"],
             credentials: true,
-            allowedHeaders: ['Content-Type', 'Authorization']
-        }
+            allowedHeaders: ["Content-Type", "Authorization"]
+        },
+        path: '/socket.io'
     });
 
     io.on('connection', (socket) => {

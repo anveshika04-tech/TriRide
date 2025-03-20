@@ -7,13 +7,14 @@ const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
 
     useEffect(() => {
-        const newSocket = io(import.meta.env.VITE_BASE_URL, {
+        const newSocket = io(import.meta.env.VITE_SOCKET_URL, {
             withCredentials: true,
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
-            autoConnect: true
+            autoConnect: true,
+            path: '/socket.io'
         });
 
         newSocket.on('connect', () => {

@@ -4,130 +4,180 @@ const mapService = require('../services/maps.service');
 const { sendMessageToSocketId } = require('../socket');
 const rideModel = require('../models/ride.model');
 
-
-module.exports.createRide = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { userId, pickup, destination, vehicleType } = req.body;
-
+module.exports.getFare = async (req, res) => {
     try {
-        const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
-        res.status(201).json(ride);
+        const { pickup, destination } = req.query;
+        
+        if (!pickup || !destination) {
+            return res.status(400).json({
+                message: 'Pickup and destination locations are required'
+            });
+        }
 
-        const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
+        console.log('Getting fare for:', { pickup, destination });
+        const fare = await rideService.getFare(pickup, destination);
+        console.log('Calculated fare:', fare);
 
-
-
-        const captainsInRadius = await mapService.getCaptainsInTheRadius(pickupCoordinates.ltd, pickupCoordinates.lng, 2);
-
-        ride.otp = ""
-
-        const rideWithUser = await rideModel.findOne({ _id: ride._id }).populate('user');
-
-        captainsInRadius.map(captain => {
-
-            sendMessageToSocketId(captain.socketId, {
-                event: 'new-ride',
-                data: rideWithUser
-            })
-
-        })
-
-    } catch (err) {
-
-        console.log(err);
-        return res.status(500).json({ message: err.message });
+        return res.json({
+            solo: fare.solo,
+            share: fare.share,
+            distance: fare.distance,
+            duration: fare.duration
+        });
+    } catch (error) {
+        console.error('Fare calculation error:', error);
+        return res.status(500).json({
+            message: 'Failed to calculate fare',
+            error: error.message
+        });
     }
-
 };
 
-module.exports.getFare = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { pickup, destination } = req.query;
-
+module.exports.createRide = async (req, res) => {
     try {
-        const fare = await rideService.getFare(pickup, destination);
-        return res.status(200).json(fare);
-    } catch (err) {
-        return res.status(500).json({ message: err.message });
+        const { pickup, destination, vehicleType } = req.body;
+        const userId = req.user.id;
+
+        if (!pickup || !destination || !vehicleType) {
+            return res.status(400).json({
+                message: 'Pickup, destination and vehicle type are required'
+            });
+        }
+
+        if (!['solo', 'share'].includes(vehicleType)) {
+            return res.status(400).json({
+                message: 'Invalid vehicle type'
+            });
+        }
+
+        console.log('Creating ride:', { pickup, destination, vehicleType, userId });
+        const ride = await rideService.createRide(userId, pickup, destination, vehicleType);
+        console.log('Ride created:', ride);
+
+        const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
+        const captainsInRadius = await mapService.getCaptainsInTheRadius(
+            pickupCoordinates.ltd, 
+            pickupCoordinates.lng, 
+            2
+        );
+
+        const rideWithUser = await rideModel.findOne({ _id: ride._id })
+            .populate('user')
+            .select('-otp');
+
+        // Notify nearby captains about the new ride
+        captainsInRadius.forEach(captain => {
+            if (captain.socketId) {
+                sendMessageToSocketId(captain.socketId, {
+                    event: 'new-ride',
+                    data: rideWithUser
+                });
+            }
+        });
+
+        return res.json(ride);
+    } catch (error) {
+        console.error('Create ride error:', error);
+        return res.status(500).json({
+            message: 'Failed to create ride',
+            error: error.message
+        });
     }
-}
+};
 
 module.exports.confirmRide = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { rideId } = req.body;
-
     try {
-        const ride = await rideService.confirmRide({ rideId, captain: req.captain });
+        const { rideId } = req.body;
 
-        sendMessageToSocketId(ride.user.socketId, {
-            event: 'ride-confirmed',
-            data: ride
-        })
+        if (!rideId) {
+            return res.status(400).json({ 
+                message: 'Ride ID is required'
+            });
+        }
 
-        return res.status(200).json(ride);
+        const ride = await rideService.confirmRide({ 
+            rideId, 
+            captain: req.captain 
+        });
+
+        if (ride.user.socketId) {
+            sendMessageToSocketId(ride.user.socketId, {
+                event: 'ride-confirmed',
+                data: ride
+            });
+        }
+
+        return res.json(ride);
     } catch (err) {
-
-        console.log(err);
-        return res.status(500).json({ message: err.message });
+        console.error('Error confirming ride:', err);
+        return res.status(500).json({ 
+            message: 'Error confirming ride',
+            error: err.message 
+        });
     }
-}
+};
 
 module.exports.startRide = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { rideId, otp } = req.query;
-
     try {
-        const ride = await rideService.startRide({ rideId, otp, captain: req.captain });
+        const { rideId, otp } = req.query;
 
-        console.log(ride);
+        if (!rideId || !otp) {
+            return res.status(400).json({ 
+                message: 'Ride ID and OTP are required'
+            });
+        }
 
-        sendMessageToSocketId(ride.user.socketId, {
-            event: 'ride-started',
-            data: ride
-        })
+        const ride = await rideService.startRide({ 
+            rideId, 
+            otp, 
+            captain: req.captain 
+        });
 
-        return res.status(200).json(ride);
+        if (ride.user.socketId) {
+            sendMessageToSocketId(ride.user.socketId, {
+                event: 'ride-started',
+                data: ride
+            });
+        }
+
+        return res.json(ride);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
+        console.error('Error starting ride:', err);
+        return res.status(500).json({ 
+            message: 'Error starting ride',
+            error: err.message 
+        });
     }
-}
+};
 
 module.exports.endRide = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { rideId } = req.body;
-
     try {
-        const ride = await rideService.endRide({ rideId, captain: req.captain });
+        const { rideId } = req.body;
 
-        sendMessageToSocketId(ride.user.socketId, {
-            event: 'ride-ended',
-            data: ride
-        })
+        if (!rideId) {
+            return res.status(400).json({ 
+                message: 'Ride ID is required'
+            });
+        }
 
+        const ride = await rideService.endRide({ 
+            rideId, 
+            captain: req.captain 
+        });
 
+        if (ride.user.socketId) {
+            sendMessageToSocketId(ride.user.socketId, {
+                event: 'ride-ended',
+                data: ride
+            });
+        }
 
-        return res.status(200).json(ride);
+        return res.json(ride);
     } catch (err) {
-        return res.status(500).json({ message: err.message });
-    } s
-}
+        console.error('Error ending ride:', err);
+        return res.status(500).json({ 
+            message: 'Error ending ride',
+            error: err.message 
+        });
+    }
+};

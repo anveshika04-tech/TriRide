@@ -1,29 +1,18 @@
-require("dotenv").config({ path: "./.env" });  // Explicitly load .env
+require("dotenv").config();
 
 const http = require('http');
 const app = require('./app');
 const { initializeSocket } = require('./socket');
 
-let port = process.env.PORT || 5001;
+const port = process.env.PORT || 5001;
 const server = http.createServer(app);
 
-// Handle server errors
-function startServer() {
-    server.listen(port, () => {
-        console.log(`🚀 Server is running on port ${port}`);
-    }).on('error', (err) => {
-        if (err.code === 'EADDRINUSE') {
-            console.log(`⚠️ Port ${port} is busy, trying ${port + 1}...`);
-            port++;
-            startServer();
-        } else {
-            console.error('❌ Server error:', err);
-        }
-    });
-}
-
+// Initialize Socket.IO with CORS
 initializeSocket(server);
-startServer();
+
+server.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+});
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
