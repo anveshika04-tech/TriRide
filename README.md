@@ -1,6 +1,6 @@
 # TriRide Application
 
-A full-stack ride-sharing application built with React, Node.js, Socket.IO, and Google Maps API.
+A full-stack ride-sharing application built with React, Node.js, Socket.IO,Talwind CSS,MongoDB(NoSQL) and OpenStreetMap API.
 
 ## Features
 
