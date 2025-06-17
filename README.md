@@ -17,7 +17,7 @@ A full-stack ride-sharing application built with React, Node.js, Socket.IO, and 
 - React
 - Socket.IO Client
 - Axios
-- Google Maps API
+- OpenStreetMap API
 - TailwindCSS
 
 ### Backend
@@ -32,7 +32,7 @@ A full-stack ride-sharing application built with React, Node.js, Socket.IO, and 
 ### Prerequisites
 - Node.js (v14 or higher)
 - MongoDB
-- Google Maps API key
+- OpenStreetMap API
 
 ### Installation
 
@@ -105,6 +105,3 @@ npm run dev
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
